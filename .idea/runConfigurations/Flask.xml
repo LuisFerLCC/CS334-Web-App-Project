@@ -1,0 +1,21 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Flask" type="Python.FlaskServer">
+    <module name="CS 334 - Web Application and Development" />
+    <option name="target" value="$PROJECT_DIR$/Part_4/app.py" />
+    <option name="targetType" value="PATH" />
+    <option name="ENV_FILES" value="" />
+    <option name="INTERPRETER_OPTIONS" value="" />
+    <option name="PARENT_ENVS" value="true" />
+    <option name="SDK_HOME" value="" />
+    <option name="SDK_NAME" value="Python 3.12 (CS334-Web-App-Project)" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/Part_4" />
+    <option name="IS_MODULE_SDK" value="false" />
+    <option name="ADD_CONTENT_ROOTS" value="true" />
+    <option name="ADD_SOURCE_ROOTS" value="true" />
+    <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+    <option name="launchJavascriptDebuger" value="false" />
+    <method v="2">
+      <option name="LaunchBrowser.Before.Run" url="http://127.0.0.1:5000" />
+    </method>
+  </configuration>
+</component>

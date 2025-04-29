@@ -1,0 +1,22 @@
+{
+	"version": "0.2.0",
+
+	"configurations": [
+		{
+			"name": "Flask",
+
+			"type": "debugpy",
+			"request": "launch",
+			"args": ["run", "--no-debugger", "--no-reload"],
+
+			"module": "flask",
+			"env": {
+				"FLASK_APP": "Part_4/app.py",
+				"FLASK_DEBUG": "1"
+			},
+
+			"jinja": true,
+			"autoStartBrowser": true
+		}
+	]
+}

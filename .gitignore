@@ -1,0 +1,4 @@
+.idea/*
+!.idea/.name
+!.idea/icon.svg
+!.idea/runConfigurations

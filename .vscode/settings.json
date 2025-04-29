@@ -1,3 +1,15 @@
 {
-    "liveServer.settings.port": 5501
+	"editor.defaultFormatter": "esbenp.prettier-vscode",
+	"sqltools.connections": [
+		{
+			"previewLimit": 50,
+			"driver": "SQLite",
+			"name": "ITPot Database (Part 4)",
+			"group": "CS 334",
+			"database": "./ITPot.sqlite"
+		}
+	],
+	"[python]": {
+		"editor.defaultFormatter": "ms-python.black-formatter"
+	}
 }
