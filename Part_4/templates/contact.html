@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Contact Us – The IT-Pot{% endblock %}
+{% block extra_css %}
+    <link rel="stylesheet" href="{{ url_for('static',filename='css/contact.css') }}"/>
+{% endblock %}
+<!-- Pulled the HTML to match the previous part 3 data -->
+{% block content %}
+    <div class="bg-image"></div>
+    <section class="contact-section">
+        <article class="contact-item">
+            <p><img src="{{ url_for('static',filename='img/Contact-Images/telephone.png') }}"/>
+                <a href="tel:+1234567890">+1 234 567 890</a></p>
+        </article>
+        <article class="contact-item">
+            <p><img src="{{ url_for('static',filename='img/Contact-Images/email.png') }}"/>
+                <a href="mailto:email@example.com">email@example.com</a></p>
+        </article>
+        <article class="contact-item">
+            <p><img src="{{ url_for('static',filename='img/Contact-Images/pin.png') }}"/>123 Main Street, City, Country</p>
+        </article>
+        <article class="contact-item social-icons">
+            <a href="#"><img src="{{ url_for('static',filename='img/Contact-Images/facebook.png') }}"/></a>
+            <a href="#"><img src="{{ url_for('static',filename='img/Contact-Images/twitter.png') }}"/></a>
+            <a href="#"><img src="{{ url_for('static',filename='img/Contact-Images/instagram.png') }}"/></a>
+        </article>
+    </section>
+
+    <!-- Utilizing POST down here to reflect back in app.py and pass the information back to be submitted into the Message table in the DB. -->
+    <section class="contact-form">
+        <form method="POST" id="contact-form">
+            <input type="text"  name="name"        placeholder="Your Name"  required/>
+            <input type="email" name="email"       placeholder="Your Email" required/>
+            <input type="tel"   name="number"      placeholder="Your Phone Number"/>
+            <textarea name="message" id="customer-message"
+                        placeholder="Enter Your Message" required></textarea>
+            <input type="submit" value="Submit"/>
+        </form>
+        <img src="{{ url_for('static',filename='img/Contact-Images/cupatea.JPG') }}" alt=""/>
+    </section>
+{% endblock %}

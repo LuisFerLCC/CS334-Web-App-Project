@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}Cart – The IT-Pot{% endblock %}
+{% block extra_css %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/cart.css') }}">
+{% endblock %}
+{% block content %}
+    <div class="cart-container">
+        <!-- Checks for flashed messages and displays them if they're available, usually for removing an item from the cart. -->
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="alert alert-success">{{ messages[0] }}</div>
+            {% endif %}
+        {% endwith %}
+
+        <h2 class="text-center">Your Cart</h2>
+        {% if entries %}
+            <table id="cart-table">
+                <thead>
+                    <tr>
+                    <th>Item</th>
+                    <th>Quantity</th>
+                    <th>Price</th>
+                    <th>Total</th>
+                    <th>Remove</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- This is for the entries within the cart session object and populates across the table for each itemId in the cart. -->
+                    {% for e in entries %}
+                    <tr>
+                    <td>{{ e.item.Name }}</td>
+                    <td>{{ e.quantity }}</td>
+                    <td>${{ "%.2f"|format(e.item.Price) }}</td>
+                    <td>${{ "%.2f"|format(e.subtotal) }}</td>
+                    <td>
+                        <form method="POST" action="{{ url_for('remove_from_cart') }}">
+                            <input type="hidden" name="itemId" value="{{ e.item.ItemID }}">
+                            <button type="submit" class="btn btn-sm text-danger"><i class="fas fa-trash-alt"></i></button>
+                        </form>
+                    </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <!-- Performs the math necessary and formatting for calculating subtotal/tax, and then total cost. -->
+            <div class="summary">
+                <p><strong>Subtotal:</strong> ${{ "%.2f"|format(total) }}</p>
+                <p><strong>Tax (10%):</strong> ${{ "%.2f"|format(total * 0.10) }}</p>
+                <p><strong>Total:</strong> ${{ "%.2f"|format(total * 1.10) }}</p>
+            </div>
+
+            <!-- Sets up the form at the bottom for submitting an order, will be used to store information in the Order table but currently not used. -->
+            <h3>Complete Your Order</h3>
+            <form method="POST" action="{{ url_for('checkout') }}" class="payment-form">
+                <input type="text" name="first_name" placeholder="First Name" required>
+                <input type="text" name="last_name" placeholder="Last Name" required>
+                <input type="text" name="cardnumber" placeholder="Card Number" required>
+                <input type="text" name="expiration" placeholder="MM/YY" required>
+                <input type="text" name="cvv" placeholder="CVV" required>
+                <input type="email" name="email" placeholder="Email" required>
+                <input type="text" name="phone" placeholder="Phone Number" required>
+                <input type="text" name="address" placeholder="Billing Address" required>
+                <button type="submit" class="btn btn-success">Submit Order</button>
+            </form>
+
+        <!-- If there's nothing in the cart, displays this message instead. -->
+        {% else %}
+            <p class="text-center">Your cart is empty.</p>
+        {% endif %}
+    </div>
+{% endblock %}
