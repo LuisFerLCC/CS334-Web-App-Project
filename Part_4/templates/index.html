@@ -1,17 +1,14 @@
+<!-- Extends so that base.html adds the header and footer information. -->
 {% extends "base.html" %}
-
+{% block title %}Home – The IT-Pot{% endblock %}
 {% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
-{% endblock %}
-
-{% block title %}
-The IT-Pot - Home
+    <link rel="stylesheet" href="{{ url_for('static',filename='css/index-style.css') }}"/>
 {% endblock %}
 
 {% block content %}
-
 <header class="banner">
-    <img src="{{ url_for('static', filename='img/HKobo9Zd8vTYdFcb-generated_image.jpg') }}" alt="Banner" class="img-fluid w-100" />
+    <img src="{{ url_for('static',filename='img/HKobo9Zd8vTYdFcb-generated_image.jpg') }}"
+        alt="Banner" class="img-fluid w-100"/>
     <div class="banner-text">
         <h1>Welcome to The IT-Pot</h1>
         <p>Serving the finest teas, brewed with care and expertise.</p>
@@ -22,39 +19,24 @@ The IT-Pot - Home
     <div class="container my-5">
         <h2 class="popular-title text-center mb-4">Popular Drinks</h2>
         <div class="row justify-content-center">
-            <div class="col-md-4">
-                <div class="card h-100 text-center">
-                    <img src="{{ url_for('static', filename='img/pexels-ngo-tr-ng-an-837314-1717767.jpg') }}" class="card-img-top" alt="Cinnamon Circuit" />
-                    <div class="card-body d-flex flex-column justify-content-center align-items-center">
-                        <h5 class="card-title">Cinnamon Circuit</h5>
-                        <p class="drink-description">A warm black tea blend with cinnamon and citrus notes.</p>
+            <!-- Iterates through the featured items passed to the page and creates a card for the three items that are passed. -->
+            {% for item in featured %}
+                <div class="col-md-4">
+                    <div class="card h-100 text-center">
+                        <img src="{{ url_for('static',filename='img/' ~ item.ImageURL) }}"
+                            class="card-img-top" alt="{{ item.Name }}"/>
+                        <div class="card-body d-flex flex-column justify-content-center align-items-center">
+                            <h5 class="card-title">{{ item.Name }}</h5>
+                            <p class="drink-description">{{ item.Description }}</p>
+                        </div>
                     </div>
                 </div>
-            </div>
-
-            <div class="col-md-4">
-                <div class="card h-100 text-center">
-                    <img src="{{ url_for('static', filename='img/pexels-nipananlifestyle-com-625927-1581484.jpg') }}" class="card-img-top" alt="Matcha Byte" />
-                    <div class="card-body d-flex flex-column justify-content-center align-items-center">
-                        <h5 class="card-title">Matcha Byte</h5>
-                        <p class="drink-description">Smooth matcha latte with vanilla and honey.</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-md-4">
-                <div class="card h-100 text-center">
-                    <img src="{{ url_for('static', filename='img/pexels-pixabay-259955.jpg') }}" class="card-img-top" alt="Debugger Detox" />
-                    <div class="card-body d-flex flex-column justify-content-center align-items-center">
-                        <h5 class="card-title">Debugger Detox</h5>
-                        <p class="drink-description">Refreshing green tea with mint and lemongrass.</p>
-                    </div>
-                </div>
-            </div>
+            {% endfor %}
         </div>
-
         <div class="shop-button py-4">
-            <a class="btn btn-primary btn-lg" href="{{ url_for('shop') }}" role="button">Shop Now</a>
+            <a class="btn btn-primary btn-lg" href="{{ url_for('shop') }}" role="button">
+            Shop Now
+            </a>
         </div>
     </div>
 </section>
@@ -63,22 +45,19 @@ The IT-Pot - Home
     <div class="container">
         <div class="row align-items-center">
             <div class="col-md-5">
-                <div class="about-img">
-                    <img src="{{ url_for('static', filename='img/about-img.png') }}" class="img-fluid" alt="About" />
-                </div>
+                <img src="{{ url_for('static',filename='img/about-img.png') }}"
+                        class="img-fluid" alt="About"/>
             </div>
             <div class="col-md-7">
                 <h2 class="about-heading">ABOUT US</h2>
                 <p class="about-text">
-                    Welcome to IT-Pot, where we provide a relaxing tea experience with the finest selection of teas.
-                    Whether you're a tea connoisseur or just discovering new flavors, we have something for everyone.
-                    Our teas are brewed by the most experienced IT professionals, who have designed our custom blends
-                    to be palatable for the most refined tea pallet.
+                    Welcome to IT-Pot, where we provide a relaxing tea experience …
                 </p>
-                <a class="btn btn-primary" href="{{ url_for('team') }}" role="button">Meet The Team</a>
+                <a class="btn btn-primary" href="{{ url_for('team') }}" role="button">
+                    Meet The Team
+                </a>
             </div>
         </div>
     </div>
 </section>
-
 {% endblock %}
