@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import Flask, render_template, request, redirect, url_for, session, flash, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 # from datetime import datetime # To be used when submitting order.
 import os
@@ -111,6 +111,167 @@ def checkout():
     session['cart'] = {}
     flash("Payment submitted successfully!")
     return redirect(url_for('shop'))
+#Creating the ORM model for user
+class User(db.Model):
+    __tablename__  = 'User'
+    __table_args__ = {'extend_existing': True}
+
+    UserID= db.Column(db.Integer,  primary_key=True)
+    FirstName= db.Column(db.String(30), nullable=False)
+    LastName = db.Column(db.String(30), nullable=False)
+    Email= db.Column(db.String(50), unique=True, nullable=False)
+    Password= db.Column(db.String(30), nullable=False)
+    ManagesOrders= db.Column(db.Boolean,default=False, nullable=False)
+    ManagesInventory= db.Column(db.Boolean,default=False, nullable=False)
+    ManagesMessages= db.Column(db.Boolean,default=False, nullable=False)
+    ManagesUsers= db.Column(db.Boolean,default=False, nullable=False)
+
+    @property
+    def full_name(self):
+        return f"{self.FirstName} {self.LastName}"
+
+@app.route('/admin/login', methods=['GET','POST'])
+def admin_login():
+    error = None
+    if request.method == 'POST':
+        user = User.query.filter_by(Email=request.form['email'], Password=request.form['password']).first()
+        if user:
+            session['user_id']= user.UserID
+            session['can_manage_orders']= user.ManagesOrders
+            session['can_manage_inventory']= user.ManagesInventory
+            session['can_manage_messages']= user.ManagesMessages
+            session['can_manage_users']= user.ManagesUsers
+            return redirect(url_for('admin_dashboard'))
+        error = "Invalid credentials."
+    return render_template('admin/login.html', error=error)
+
+@app.route('/admin/dashboard')
+def admin_dashboard():
+    if 'user_id' not in session:
+        return redirect(url_for('admin_login'))       
+    raw_items = Item.query.all()
+    inventory = []
+    for i in raw_items:
+        inventory.append({
+            'sku':i.ItemID,               
+            'series':getattr(i, 'Series', ''),  
+            'name':i.Name,                
+            'caffeinated': not i.IsNoCaffeine,    
+            'cold':i.IsCold,               
+            'stock':getattr(i, 'Stock', 0),    
+            'price':i.Price                 
+        }) 
+    messages= Message.query.order_by(Message.MessageID.desc()).all()  
+    users= User.query.all()  
+    return render_template('admin/dashboard.html',inventory=inventory,messages=messages,users=users)
+
+@app.route('/admin/logout')
+def logout():
+    session.pop('user_id', None)
+    return redirect(url_for('admin_login'))
+
+
+
+@app.route('/admin/users', methods=['GET', 'POST'])
+def users():
+    if 'user_id' not in session:
+        return redirect(url_for('admin_login'))
+
+    edit_id   = request.args.get('edit_user',   type=int)
+    delete_id = request.args.get('delete_user', type=int)
+
+    if delete_id and request.method == 'POST':
+        u = User.query.get_or_404(delete_id)
+        db.session.delete(u)
+        db.session.commit()
+        return redirect(url_for('users'))
+
+    if request.method == 'POST':
+        fn = request.form['first_name']
+        ln = request.form['last_name']
+        em = request.form['email']
+        pw = request.form.get('password', '')
+        o  = bool(request.form.get('manage_orders'))
+        i  = bool(request.form.get('manage_inventory'))
+        m  = bool(request.form.get('manage_messages'))
+        u  = bool(request.form.get('manage_users'))
+
+
+        if not (o or i or m or u):
+            flash('Please select at least one permission.', 'danger')
+            if edit_id:
+                return redirect(url_for('users', edit_user=edit_id))
+            else:
+                return redirect(url_for('users', new=1))
+
+
+        dup = User.query.filter_by(Email=em).first()
+        if dup and (not edit_id or dup.UserID != edit_id):
+            flash('That email is already in use.', 'danger')
+            if edit_id:
+                return redirect(url_for('users', edit_user=edit_id))
+            else:
+                return redirect(url_for('users', new=1))
+
+        if edit_id:
+            user = User.query.get_or_404(edit_id)
+            user.FirstName= fn
+            user.LastName= ln
+            user.Email= em
+            if pw:
+                user.Password= pw
+            user.ManagesOrders= o
+            user.ManagesInventory= i
+            user.ManagesMessages= m
+            user.ManagesUsers= u
+        else:
+            user = User(
+                FirstName=fn,
+                LastName=ln,
+                Email=em,
+                Password=pw,
+                ManagesOrders=o,
+                ManagesInventory=i,
+                ManagesMessages=m,
+                ManagesUsers=u
+            )
+            db.session.add(user)
+
+        try:
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            flash('Could not save user. Please try again.', 'danger')
+            return redirect(url_for('users', edit_user=edit_id) if edit_id else url_for('users', new=1))
+
+        return redirect(url_for('users'))
+
+    new_user  = 'new' in request.args
+    edit_user = User.query.get(edit_id) if edit_id else None
+    users     = User.query.order_by(User.UserID).all()
+    return render_template('admin/users.html',users=users,edit_user=edit_user,new_user=new_user)
+
+@app.route('/admin/messages')
+def messages():
+    if 'user_id' not in session:
+        return redirect(url_for('admin_login'))
+    return render_template('admin/messages.html')
+
+@app.route('/admin/inventory')
+def inventory():
+    if 'user_id' not in session:
+        return redirect(url_for('admin_login'))
+    return render_template('admin/inventory.html')
+
+@app.route('/admin/orders')
+def orders():
+    if 'user_id' not in session:
+        return redirect(url_for('admin_login'))
+    return render_template('admin/orders.html')
+@app.route('/sw.js')
+def serve_sw():
+    return send_from_directory(app.static_folder, 'sw.js',
+                               mimetype='application/javascript')
 
 if __name__ == '__main__':
     app.run(debug=True)
