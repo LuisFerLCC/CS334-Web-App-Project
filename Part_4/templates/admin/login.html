@@ -1,0 +1,34 @@
+
+{% extends "base.html" %}
+
+{% block title %}Admin Login{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/login.css') }}" />
+{% endblock %}
+
+{% block content %}
+<main id="login-card-container" class="container-sm d-flex justify-content-center">
+  <div id="login-card" class="card flex-grow-1 my-5">
+    <div class="card-body">
+      <h3 class="card-title mb-4">Sign In</h3>
+
+      {% if error %}
+      <div class="alert alert-danger">{{ error }}</div>
+      {% endif %}
+
+      <form action="{{ url_for('admin_login') }}" method="post">
+        <div class="mb-3">
+          <label for="email" class="form-label">Email</label>
+          <input name="email" id="email" type="email" class="form-control" placeholder="you@example.com" required>
+        </div>
+        <div class="mb-3">
+          <label for="password" class="form-label">Password</label>
+          <input name="password" id="password" type="password" class="form-control" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Sign In</button>
+      </form>
+    </div>
+  </div>
+</main>
+{% endblock %}
