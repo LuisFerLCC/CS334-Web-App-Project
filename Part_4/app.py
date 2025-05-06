@@ -48,11 +48,23 @@ class Item(db.Model):
     __table_args__ = {"extend_existing": True}
 
     ItemID = db.Column(db.Integer, primary_key=True)
-    Name = db.Column(db.String(50))
-    Price = db.Column(db.Float)
-    ImageURL = db.Column(db.String(100))
-    IsCold = db.Column(db.Boolean)
+    Name = db.Column(db.String(30))
+    Description = db.Column(db.String(65))
     IsNoCaffeine = db.Column(db.Boolean)
+    IsCold = db.Column(db.Boolean)
+    Stock = db.Column(db.Integer)
+    Price = db.Column(db.Float)
+    ImageURL = db.Column(db.String(50))
+    SeriesID = db.Column(db.Integer, db.ForeignKey("Series.SeriesID"))
+    IsActive = db.Column(db.Boolean, default=True)
+
+
+class Series(db.Model):
+    __tablename__ = "Series"
+    __table_args__ = {"extend_existing": True}
+
+    SeriesID = db.Column(db.Integer, primary_key=True)
+    Name = db.Column(db.String(30))
 
 
 # Creating the ORM model for Message, uses extend_existing because DB is already existing and not from scratch.
@@ -97,7 +109,17 @@ class OrderedItems(db.Model):
 # This is the base page for index.html template, pulls 3 items to show as popular drinks.
 @app.route("/")
 def index():
-    items = Item.query.order_by(Item.ItemID.desc()).limit(3).all()
+    items = (
+        Item.query.filter(Item.IsActive)
+        .order_by(
+            # Stock may be the best metric to use for popularity. For items with
+            # the same stock, order by ItemID to prioritize newer items.
+            Item.ItemID.desc()
+        )
+        .order_by(Item.Stock.desc())
+        .limit(3)
+        .all()
+    )
     return render_template("index.html", featured=items)
 
 
