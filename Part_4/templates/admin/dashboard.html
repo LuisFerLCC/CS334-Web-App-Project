@@ -77,8 +77,7 @@
             {% if msg.Phone %}<a href="tel:{{ msg.phone }}">{{ msg.phone }}</a>{% endif %}
             <hr />
             <p>{{ msg.Body|replace('\n', '<br />')|safe }}</p>
-            <form action="{{ url_for('admin_dashboard') }}" method="post">
-              <button class="btn btn-outline-danger">Delete</button>
+            
             </form>
           </div>
           {% endfor %}

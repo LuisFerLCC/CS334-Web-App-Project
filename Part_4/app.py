@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash, send_from_directory
+from flask import Flask, render_template, request, redirect, url_for, session, flash, send_from_directory, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime # To be used when submitting order.
 # from datetime import datetime # To be used when submitting order.
@@ -225,32 +225,50 @@ def admin_login():
         error = "Invalid credentials."
     return render_template('admin/login.html', error=error)
 
-@app.route('/admin/dashboard')
+@app.route('/admin/dashboard', methods=['GET', 'POST'])
 def admin_dashboard():
     if 'user_id' not in session:
-        return redirect(url_for('admin_login'))       
+        return redirect(url_for('admin_login'))
+
     raw_items = Item.query.all()
     inventory = []
     for i in raw_items:
         inventory.append({
-            'sku':i.ItemID,               
-            'series':getattr(i, 'Series', ''),  
-            'name':i.Name,                
-            'caffeinated': not i.IsNoCaffeine,    
-            'cold':i.IsCold,               
-            'stock':getattr(i, 'Stock', 0),    
-            'price':i.Price                 
-        }) 
-    messages= Message.query.order_by(Message.MessageID.desc()).all()  
-    users= User.query.all()  
-    return render_template('admin/dashboard.html',inventory=inventory,messages=messages,users=users)
+            'sku': i.ItemID,
+            'series': getattr(i, 'Series', ''),
+            'name': i.Name,
+            'caffeinated': not i.IsNoCaffeine,
+            'cold': i.IsCold,
+            'stock': getattr(i, 'Stock', 0),
+            'price': i.Price
+        })
+   
+    messages = Message.query.order_by(Message.MessageID.desc()).limit(3).all()
+
+    users = User.query.all()
+    raw_orders = Order.query.order_by(Order.DateTime.desc()).limit(5).all()
+    status_map = {1: 'Pending', 2: 'Completed', 3: 'Cancelled'}
+    orders = [
+        {
+            'date': o.DateTime.strftime('%Y-%m-%d') if o.DateTime else '',
+            'customer_name': f"{o.CustomerFirstName} {o.CustomerLastName}",
+            'item_count': sum(i.Amount for i in o.order_items),
+            'address': o.Address,
+            'status': status_map.get(o.StatusID, 'Unknown'),
+            'status_class': (
+                'success' if status_map.get(o.StatusID, '').lower() == 'completed'
+                else 'warning' if status_map.get(o.StatusID, '').lower() == 'pending'
+                else 'secondary'
+            )
+        }
+        for o in raw_orders
+    ]
+    return render_template('admin/dashboard.html', inventory=inventory, messages=messages, users=users, orders=orders)
 
 @app.route('/admin/logout')
 def logout():
     session.pop('user_id', None)
     return redirect(url_for('admin_login'))
-
-
 
 @app.route('/admin/users', methods=['GET', 'POST'])
 def users():
@@ -331,11 +349,18 @@ def users():
     users     = User.query.order_by(User.UserID).all()
     return render_template('admin/users.html',users=users,edit_user=edit_user,new_user=new_user)
 
-@app.route('/admin/messages')
+@app.route('/admin/messages', methods=['GET', 'POST'])
 def messages():
     if 'user_id' not in session:
         return redirect(url_for('admin_login'))
-    return render_template('admin/messages.html')
+    if request.method == 'POST':
+        msg_id = request.form.get('message_id', type=int)
+        msg = Message.query.get_or_404(msg_id)
+        db.session.delete(msg)
+        db.session.commit()
+        flash('Message deleted.')
+    messages = Message.query.order_by(Message.MessageID.desc()).all()
+    return render_template('admin/messages.html', messages=messages)
 
 @app.route('/admin/inventory')
 def inventory():
@@ -352,6 +377,11 @@ def orders():
 def serve_sw():
     return send_from_directory(app.static_folder, 'sw.js',
                                mimetype='application/javascript')
+@app.route('/api/items', methods=['GET'])
+def get_public_items():
+    items = Item.query.with_entities(Item.Name, Item.Price).all()
+    result = [{"name": item.Name, "price": float(item.Price)} for item in items]
+    return jsonify(result)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0', port=5000)
