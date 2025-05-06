@@ -1,7 +1,9 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime # To be used when submitting order.
 # from datetime import datetime # To be used when submitting order.
 import os
+import re
 
 app = Flask(__name__)
 
@@ -36,6 +38,32 @@ class Message(db.Model):
     Email = db.Column(db.String(100))
     Phone = db.Column(db.String(20))
     Body = db.Column(db.Text)
+
+class Order(db.Model):
+    __tablename__ = 'Order'
+    __table_args__ = {'extend_existing': True}
+
+    OrderID = db.Column(db.Integer, primary_key=True)
+    CustomerFirstName = db.Column(db.String(50))
+    CustomerLastName = db.Column(db.String(50))
+    Email = db.Column(db.String(100))
+    DateTime = db.Column(db.DateTime)
+    Address = db.Column(db.String(200))
+    Phone = db.Column(db.String(20))
+    StatusID = db.Column(db.Integer)
+
+
+class OrderedItems(db.Model):
+    __tablename__ = 'OrderedItems'
+    __table_args__ = {'extend_existing': True}
+
+    OrderID = db.Column(db.Integer, db.ForeignKey('Order.OrderID'), primary_key=True)
+    ItemID = db.Column(db.Integer, db.ForeignKey('Item.ItemID'), primary_key=True)
+    Amount = db.Column(db.Integer, nullable=False)  # not Quantity
+    SpecialInstructions = db.Column(db.String(100), nullable=True)
+
+    order = db.relationship('Order', backref='order_items')
+    item = db.relationship('Item')
 
 # This is the base page for index.html template, pulls 3 items to show as popular drinks.
 @app.route('/')
@@ -108,9 +136,61 @@ def remove_from_cart():
 # Currently just clears the cart, creates a flash message that the payment was submitted, and then redirects to shop.
 @app.route('/checkout', methods=['POST'])
 def checkout():
+    first = request.form['first_name'].strip()
+    last = request.form['last_name'].strip()
+    email = request.form['email'].strip()
+    phone = request.form['phone'].strip()
+    address = request.form['address'].strip()
+    cardnumber = request.form.get('cardnumber', '').strip()
+    expiration = request.form.get('expiration', '').strip()
+    cvv = request.form.get('cvv', '').strip()
+
+    if not all([first, last, email, phone, address, cardnumber, expiration, cvv]):
+        flash("All fields are required.")
+        return redirect(url_for('cart'))
+    if not re.fullmatch(r'\d{13,19}', cardnumber):
+        flash("Invalid card number. Must be 13–19 digits.")
+        return redirect(url_for('cart'))
+    if not re.fullmatch(r'\d{3,4}', cvv):
+        flash("Invalid CVV. Must be 3 or 4 digits.")
+        return redirect(url_for('cart'))
+    if not re.fullmatch(r'(0[1-9]|1[0-2])/([0-9]{2})', expiration):
+        flash("Expiration must be in MM/YY format.")
+        return redirect(url_for('cart'))
+
+    cart = session.get('cart', {})
+    if not cart:
+        flash("Your cart is empty.")
+        return redirect(url_for('cart'))
+
+    total = 0.0
+    for item_id, qty in cart.items():
+        item = Item.query.get(item_id)
+        if item:
+            total += item.Price * qty
+
+    # Adding the order
+    order = Order(
+        CustomerFirstName=first,
+        CustomerLastName=last,
+        Email=email,
+        DateTime=datetime.now(),
+        Address=address,
+        Phone=phone,
+        StatusID=1
+    )
+    db.session.add(order)
+    db.session.commit()
+
+    # Add ordered items
+    for item_id, quantity in cart.items():
+        db.session.add(OrderedItems(OrderID=order.OrderID, ItemID=item_id, Amount=quantity))
+    db.session.commit()
+
     session['cart'] = {}
-    flash("Payment submitted successfully!")
+    flash("Order submitted successfully!")
     return redirect(url_for('shop'))
+
 #Creating the ORM model for user
 class User(db.Model):
     __tablename__  = 'User'
