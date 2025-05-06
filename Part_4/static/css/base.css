@@ -1,3 +1,21 @@
+
+html, body {
+	height: 100%;
+	margin: 0;
+  }
+  
+
+  .page‑wrapper {
+	display: flex;
+	flex-direction: column;
+	min-height: 100vh; 
+  }
+  
+
+  .content {
+	flex: 1;
+  }
+
 body {
 	font-family: 'Roboto', sans-serif;
 	margin: 0; padding: 0;
@@ -10,6 +28,48 @@ body {
 }
 #navbar .nav-link:hover {
 	color: #008e71;
+}
+#navbar {
+	padding: 10px 30px;
+
+	font-family: "JetBrains Mono", monospace;
+	font-size: 175%;
+	font-weight: 700;
+}
+
+#navbar .navbar-brand {
+	font-size: 1.5rem;
+
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+#navbar .nav-link {
+	padding: 10px 15px;
+
+	letter-spacing: 0.5px;
+
+	position: relative;
+	z-index: 10;
+}
+
+#navbar .nav-link:hover {
+	transition: color 0.3s ease-in-out;
+}
+
+#navbar .navbar-nav {
+	display: flex;
+	align-items: center;
+}
+
+#navbar .navbar-brand img {
+	width: auto;
+	height: 50px;
+
+	margin-right: 10px;
+
+	display: block;
 }
 .footer {
 	background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org…"></svg>')
