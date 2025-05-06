@@ -1,11 +1,23 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, send_from_directory, jsonify
 from flask_sqlalchemy import SQLAlchemy
+from flask_mail import Mail, Message as MailMessage
 from datetime import datetime # To be used when submitting order.
 # from datetime import datetime # To be used when submitting order.
 import os
 import re
+import config as cf
 
 app = Flask(__name__)
+
+app.config['MAIL_SERVER'] = cf.MAIL_SERVER
+app.config['MAIL_PORT'] = cf.MAIL_PORT
+app.config['MAIL_USERNAME'] = cf.MAIL_USERNAME
+app.config['MAIL_PASSWORD'] = cf.MAIL_PASSWORD
+app.config['MAIL_USE_TLS'] = cf.MAIL_USE_TLS
+app.config['MAIL_USE_SSL'] = cf.MAIL_USE_SSL
+app.config['MAIL_DEFAULT_SENDER'] = cf.MAIL_DEFAULT_SENDER
+
+mail = Mail(app)
 
 # secret_key used for session information in order to keep the cart information available for adding/removing items and eventually for submitting orders.
 app.secret_key = 'keyforusingsessions'
@@ -186,6 +198,34 @@ def checkout():
     for item_id, quantity in cart.items():
         db.session.add(OrderedItems(OrderID=order.OrderID, ItemID=item_id, Amount=quantity))
     db.session.commit()
+
+
+    # Compose email body
+    body_lines = [
+        f"Dear {first} {last},",
+        "",
+        "Thank you for your purchase! Here is your receipt:",
+        "",
+    ]
+
+    total = 0
+    for itemId, quantity in session.get('cart', {}).items():
+        item = Item.query.get(itemId)
+        if item:
+            subtotal = item.Price * quantity
+            total += subtotal
+            body_lines.append(f"{item.Name} x{quantity} @ ${item.Price:.2f} = ${subtotal:.2f}")
+
+    body_lines.append("")
+    body_lines.append(f"Total: ${total:.2f}")
+    body_lines.append("")
+    body_lines.append("The IT-Pot Team")
+
+    # Send email
+    msg = MailMessage("Your IT-Pot Order Receipt", recipients=[email])
+    msg.body = "\n".join(body_lines)
+    mail.send(msg)
+
 
     session['cart'] = {}
     flash("Order submitted successfully!")
