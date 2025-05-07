@@ -341,8 +341,19 @@ class User(db.Model):
         return f"{self.FirstName} {self.LastName}"
 
 
+@app.route("/admin")
+def admin():
+    if "user_id" in session:
+        return redirect(url_for("admin_dashboard"))
+
+    return redirect(url_for("admin_login"))
+
+
 @app.route("/admin/login", methods=["GET", "POST"])
 def admin_login():
+    if "user_id" in session:
+        return redirect(url_for("admin_dashboard"))
+
     error = None
     if request.method == "POST":
         user = User.query.filter_by(
