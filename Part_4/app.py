@@ -448,6 +448,9 @@ def logout():
 def users():
     if "user_id" not in session:
         return redirect(url_for("admin_login"))
+    if not session.get("can_manage_users"):
+        flash("You do not have permission to view this page.", "danger")
+        return redirect(url_for("admin_dashboard"))
 
     edit_id = request.args.get("edit_user", type=int)
     delete_id = request.args.get("delete_user", type=int)
