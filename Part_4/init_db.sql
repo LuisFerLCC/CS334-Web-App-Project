@@ -98,6 +98,7 @@ CREATE TABLE Item
     SeriesID     integer               not null
         constraint Item_fk_SeriesID
             references Series,
+    IsActive     boolean default true  not null,
     constraint Item_chk_Description_Length
         check (length(Item.Description) > 0),
     constraint Item_chk_ImageURL_Length
@@ -109,9 +110,9 @@ CREATE TABLE Item
     constraint Item_chk_Stock_IsNotNegative
         check (Item.Stock >= 0)
 );
-INSERT INTO Item VALUES(1,'Cinnamon Circuit','A warm black tea blend with cinnamon and citrus notes.',0,0,50,3.49000000000000021,'product1.jpg',1);
-INSERT INTO Item VALUES(2,'Matcha Byte','Smooth matcha latte with vanilla and honey.',0,0,50,2.49000000000000021,'product2.jpg',3);
-INSERT INTO Item VALUES(3,'Debugger Detox','Refreshing green tea with mint and lemongrass.',1,0,50,2.99000000000000021,'product3.jpg',2);
+INSERT INTO Item VALUES(1,'Cinnamon Circuit','A warm black tea blend with cinnamon and citrus notes.',0,0,50,3.49,'product1.jpg',1,1);
+INSERT INTO Item VALUES(2,'Matcha Byte','Smooth matcha latte with vanilla and honey.',0,0,50,2.49,'product2.jpg',3,1);
+INSERT INTO Item VALUES(3,'Debugger Detox','Refreshing green tea with mint and lemongrass.',1,0,50,2.99,'product3.jpg',2,1);
 CREATE TABLE IF NOT EXISTS "Order"
 (
     OrderID           integer                            not null
@@ -139,6 +140,8 @@ CREATE TABLE IF NOT EXISTS "Order"
 );
 INSERT INTO "Order" VALUES(1,'Luis','Maldonado','luisfern837@gmail.com','2025-04-29 23:36:25.000','1500 S Ave K, Portales, NM 88130','+52 (461) 138 1559',1);
 INSERT INTO "Order" VALUES(2,'Mei','Reeder','Mei.Reeder@enmu.edu','2025-04-29 21:09:01','1500 S Ave K, Portales, NM 88130','575.562.1011',3);
+INSERT INTO "Order" VALUES(3,'Testy','McTest','test@tester.com','2025-05-05 18:51:36.110861','123 ABC Street','18005055005',1);
+INSERT INTO "Order" VALUES(4,'Test2','Testerson','griffin.graham@enmu.edu','2025-05-06 09:57:07.957747','123 ABC Ave','18005055008',1);
 CREATE TABLE OrderedItems
 (
     OrderID             integer not null
@@ -161,11 +164,16 @@ CREATE TABLE OrderedItems
 INSERT INTO OrderedItems VALUES(1,1,2,'Extra Hot');
 INSERT INTO OrderedItems VALUES(1,2,1,NULL);
 INSERT INTO OrderedItems VALUES(2,3,1,NULL);
+INSERT INTO OrderedItems VALUES(3,1,1,NULL);
+INSERT INTO OrderedItems VALUES(3,2,2,NULL);
+INSERT INTO OrderedItems VALUES(4,1,4,NULL);
+INSERT INTO OrderedItems VALUES(4,2,2,NULL);
+INSERT INTO OrderedItems VALUES(4,3,1,NULL);
 DELETE FROM sqlite_sequence;
 INSERT INTO sqlite_sequence VALUES('User',4);
 INSERT INTO sqlite_sequence VALUES('Message',2);
 INSERT INTO sqlite_sequence VALUES('Status',5);
 INSERT INTO sqlite_sequence VALUES('Series',3);
 INSERT INTO sqlite_sequence VALUES('Item',3);
-INSERT INTO sqlite_sequence VALUES('Order',2);
+INSERT INTO sqlite_sequence VALUES('Order',4);
 COMMIT;
