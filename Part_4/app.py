@@ -11,6 +11,7 @@ from flask import (
 )
 from flask_sqlalchemy import SQLAlchemy
 from flask_mail import Mail, Message as MailMessage
+from werkzeug.utils import secure_filename
 from datetime import datetime  # To be used when submitting order.
 
 # from datetime import datetime # To be used when submitting order.
@@ -35,6 +36,7 @@ app.secret_key = "keyforusingsessions"
 
 # SQLAlchemy setup in order to get it to work, had to use abspath command in order to get it to read the correct file, it kept throwing errors even though the DB was configured.
 basedir = os.path.abspath(os.path.dirname(__file__))
+item_images_dir = os.path.join(basedir, "static", "img", "products")
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + os.path.join(
     basedir, "ITPot.sqlite"
 )
@@ -576,9 +578,114 @@ def new_item():
     return "TODO"
 
 
-@app.route("/admin/inventory/<int:item_id>")
+@app.route("/admin/inventory/<int:item_id>", methods=["GET", "POST"])
 def edit_item(item_id):
-    return "TODO"
+    if "user_id" not in session:
+        return redirect(url_for("admin_login"))
+
+    if not session.get("can_manage_inventory"):
+        flash("You do not have permission to view this page.", "danger")
+        return redirect(url_for("admin_dashboard"))
+
+    if request.method == "POST":
+        item = Item.query.get_or_404(item_id)
+        item.Name = request.form["name"]
+        item.Description = request.form["description"]
+        item.IsNoCaffeine = bool(request.form.get("notCaffeinated"))
+        item.IsCold = bool(request.form.get("cold"))
+        item.Stock = request.form["stock"]
+        item.Price = request.form["price"]
+
+        series_name = request.form.get("series")
+        series = Series.query.filter_by(Name=series_name).first()
+        if not series:
+            series = Series(Name=series_name)
+            db.session.add(series)
+            series = Series.query.filter_by(Name=series_name).first()
+
+        item.SeriesID = series.SeriesID
+
+        db.session.add(item)
+        db.session.commit()
+        flash("Item updated.", category="success")
+        return redirect(url_for("edit_item", item_id=item_id))
+
+    item = Item.query.get_or_404(item_id)
+    raw_series = Series.query.all()
+    series_map = {s.SeriesID: s.Name for s in raw_series}
+
+    return render_template(
+        "admin/inventory/edit.html",
+        item=item,
+        series_map=series_map,
+    )
+
+
+@app.route("/admin/inventory/<int:item_id>/image", methods=["POST"])
+def upload_item_image(item_id):
+    if "user_id" not in session:
+        return redirect(url_for("admin_login"))
+
+    if not session.get("can_manage_inventory"):
+        flash("You do not have permission to view this page.", "danger")
+        return redirect(url_for("admin_dashboard"))
+
+    if "image" not in request.files:
+        flash("No file part", "danger")
+        return redirect(url_for("edit_item", item_id=item_id))
+
+    file = request.files["image"]
+    if file.filename == "":
+        flash("No selected file", "danger")
+        return redirect(url_for("edit_item", item_id=item_id))
+
+    if file and file.filename.rsplit(".", 1)[1].lower() in ["png", "jpg", "jpeg"]:
+        filename = secure_filename(file.filename)
+        file_path = os.path.join(item_images_dir, filename)
+        file.save(file_path)
+
+        item = Item.query.get_or_404(item_id)
+        item.ImageURL = filename
+        db.session.commit()
+        flash("Image uploaded successfully.", "success")
+    else:
+        flash("Invalid file type. Only PNG, JPG, and JPEG are allowed.", "danger")
+
+    return redirect(url_for("edit_item", item_id=item_id))
+
+
+@app.route("/admin/inventory/<int:item_id>/discontinue", methods=["POST"])
+def discontinue_item(item_id):
+    if "user_id" not in session:
+        return redirect(url_for("admin_login"))
+
+    if not session.get("can_manage_inventory"):
+        flash("You do not have permission to view this page.", "danger")
+        return redirect(url_for("admin_dashboard"))
+
+    item = Item.query.get_or_404(item_id)
+    item.IsActive = False
+    db.session.add(item)
+    db.session.commit()
+    flash("Item discontinued.", category="success")
+    return redirect(url_for("edit_item", item_id=item_id))
+
+
+@app.route("/admin/inventory/<int:item_id>/reactivate", methods=["POST"])
+def reactivate_item(item_id):
+    if "user_id" not in session:
+        return redirect(url_for("admin_login"))
+
+    if not session.get("can_manage_inventory"):
+        flash("You do not have permission to view this page.", "danger")
+        return redirect(url_for("admin_dashboard"))
+
+    item = Item.query.get_or_404(item_id)
+    item.IsActive = True
+    db.session.add(item)
+    db.session.commit()
+    flash("Item reactivated.", category="success")
+    return redirect(url_for("edit_item", item_id=item_id))
 
 
 @app.route("/admin/orders")
