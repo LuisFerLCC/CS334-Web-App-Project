@@ -417,6 +417,7 @@ def admin_dashboard():
     )
     orders = [
         {
+            "id": o.OrderID,
             "date": o.DateTime.strftime("%Y-%m-%d - %H:%M:%S") if o.DateTime else "",
             "customer_name": f"{o.CustomerFirstName} {o.CustomerLastName}",
             "item_count": sum(i.Amount for i in o.order_items),
@@ -561,6 +562,7 @@ def orders():
 
     orders = [
         {
+            "id": o.OrderID,
             "date": o.DateTime.strftime("%Y-%m-%d - %H:%M:%S") if o.DateTime else "",
             "customer_name": f"{o.CustomerFirstName} {o.CustomerLastName}",
             "item_count": sum(i.Amount for i in o.order_items),
@@ -578,6 +580,114 @@ def orders():
     ]
 
     return render_template("admin/orders/all.html", orders=orders)
+
+
+@app.route("/admin/orders/<int:order_id>", methods=["GET", "POST"])
+def edit_order(order_id):
+    if "user_id" not in session:
+        return redirect(url_for("admin_login"))
+
+    if not session.get("can_manage_orders"):
+        flash("You do not have permission to view this page.", "danger")
+        return redirect(url_for("admin_dashboard"))
+
+    if request.method == "POST":
+        order = Order.query.get_or_404(order_id)
+
+        status_name = request.form.get("status", type=int)
+        order.StatusID = Status.query.filter_by(StatusID=status_name).first().StatusID
+
+        db.session.commit()
+        flash("Order status updated.", category="success")
+        return redirect(url_for("edit_order", order_id=order_id))
+
+    raw_statuses = Status.query.all()
+    raw_order = Order.query.get_or_404(order_id)
+    raw_ordered_items = (
+        OrderedItems.query.filter_by(OrderID=order_id)
+        .join(Item, OrderedItems.ItemID == Item.ItemID)
+        .add_columns(
+            OrderedItems.ItemID,
+            OrderedItems.Amount,
+            OrderedItems.SpecialInstructions,
+            Item.ImageURL,
+            Item.Name,
+            Item.IsActive,
+        )
+        .all()
+    )
+
+    order = {
+        "id": raw_order.OrderID,
+        "date": (
+            raw_order.DateTime.strftime("%Y-%m-%d - %H:%M:%S")
+            if raw_order.DateTime
+            else ""
+        ),
+        "customer_name": f"{raw_order.CustomerFirstName} {raw_order.CustomerLastName}",
+        "address": raw_order.Address,
+        "phone": raw_order.Phone,
+        "email": raw_order.Email,
+        "status": next(
+            (s for s in raw_statuses if s.StatusID == raw_order.StatusID),
+            "Unknown",
+        ),
+        "status_class": (
+            "success"
+            if raw_order.StatusID == max(s.StatusID for s in raw_statuses)
+            else "secondary" if raw_order.StatusID == 0 else "warning"
+        ),
+        "itemsList": [
+            {
+                "id": ordered_item.ItemID,
+                "imageURL": ordered_item.ImageURL,
+                "name": ordered_item.Name,
+                "amount": ordered_item.Amount,
+                "specialInstructions": ordered_item.SpecialInstructions,
+                "isActive": ordered_item.IsActive,
+            }
+            for ordered_item in raw_ordered_items
+        ],
+    }
+
+    return render_template(
+        "admin/orders/edit.html",
+        order=order,
+        statuses=raw_statuses,
+        completed_id=max(s.StatusID for s in raw_statuses) if raw_statuses else 0,
+    )
+
+
+@app.route("/admin/orders/<int:order_id>/next-status")
+def next_status(order_id):
+    if "user_id" not in session:
+        return redirect(url_for("admin_login"))
+
+    if not session.get("can_manage_orders"):
+        flash("You do not have permission to view this page.", "danger")
+        return redirect(url_for("admin_dashboard"))
+
+    order = Order.query.get_or_404(order_id)
+    order.StatusID += 1
+    db.session.commit()
+    flash("Order status updated.", category="success")
+    return redirect(url_for("edit_order", order_id=order_id))
+
+
+@app.route("/admin/orders/<int:order_id>/cancel")
+def cancel_order(order_id):
+    if "user_id" not in session:
+        return redirect(url_for("admin_login"))
+
+    if not session.get("can_manage_orders"):
+        flash("You do not have permission to view this page.", "danger")
+        return redirect(url_for("admin_dashboard"))
+
+    order = Order.query.get_or_404(order_id)
+    order.StatusID = 0
+    db.session.commit()
+    flash("Order cancelled.", category="success")
+    return redirect(url_for("edit_order", order_id=order_id))
 
 
 @app.route("/sw.js")
