@@ -532,13 +532,18 @@ def users():
 def messages():
     if "user_id" not in session:
         return redirect(url_for("admin_login"))
+    if not session.get("can_manage_messages"):
+        flash("You do not have permission to view this page.", "danger")
+        return redirect(url_for("admin_dashboard"))
+
     if request.method == "POST":
         msg_id = request.form.get("message_id", type=int)
         msg = Message.query.get_or_404(msg_id)
         db.session.delete(msg)
         db.session.commit()
-        flash("Message deleted.")
-    messages = Message.query.order_by(Message.MessageID.desc()).all()
+        flash("Message deleted.", "success")
+
+    messages = Message.query.order_by(Message.MessageID.asc()).all()
     return render_template("admin/messages.html", messages=messages)
 
 
