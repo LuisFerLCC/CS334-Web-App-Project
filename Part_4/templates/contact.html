@@ -37,7 +37,8 @@
         <form method="POST" id="contact-form">
             <input type="text"  name="name"        placeholder="Your Name"  maxlength="70" required/>
             <input type="email" name="email"       placeholder="Your Email" maxlength="50" required/>
-            <input type="tel"   name="number"      placeholder="Your Phone Number"/>
+            <input  type="tel"  name="number"  placeholder="Your Phone Number"  required  minlength="10"
+             maxlength="15"  pattern="^\d{10,15}$"  title="Enter between 10 and 15 digits, numbers only."/>
             <textarea name="message" id="customer-message"
                         placeholder="Enter Your Message" required maxlength="1000"></textarea>
             <input type="submit" value="Submit"/>

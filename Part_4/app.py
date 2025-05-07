@@ -578,7 +578,7 @@ def inventory():
             "series": next(
                 (s.Name for s in raw_series if s.SeriesID == i.SeriesID), "Unknown"
             ),
-            "name": f"{'' if i.IsActive else "[DISCONTINUED] "}{i.Name}",
+            "name": f"{'' if i.IsActive else '[DISCONTINUED] '}{i.Name}",
             "notCaffeinated": i.IsNoCaffeine,
             "cold": i.IsCold,
             "stock": getattr(i, "Stock", 0),
