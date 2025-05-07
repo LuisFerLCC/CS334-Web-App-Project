@@ -133,6 +133,15 @@ def index():
     return render_template("index.html", featured=items)
 
 
+@app.route("/favicon.ico")
+def favicon():
+    return send_from_directory(
+        os.path.join(app.root_path, "static"),
+        "favicon.ico",
+        mimetype="image/vnd.microsoft.icon",
+    )
+
+
 # This is the shop page and it pulls all items from the DB in order to populate the page on the template.
 @app.route("/shop")
 def shop():
