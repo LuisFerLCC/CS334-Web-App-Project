@@ -1,0 +1,153 @@
+{% extends "admin/dashboard.html" %}
+
+{% block title %}New item{% endblock %}
+
+{% block extra_admin_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/orders/edit.css') }}" />
+{% endblock %}
+
+{% block admin_content %}
+<h1>New item</h1>
+
+<hr class="mb-4">
+
+<form enctype="multipart/form-data" method="post">
+	<h2 class="mb-3">
+		<input
+			type="text"
+			placeholder="[Name]"
+			class="textfield-seamless"
+			name="name"
+			maxlength="30"
+			required />
+
+		<small class="text-body-tertiary">
+			$<input
+				type="number"
+				placeholder="[Price]"
+				class="textfield-seamless"
+				name="price"
+				value="0.00"
+				min="0.00"
+				step="0.01"
+				required />
+		</small>
+	</h2>
+
+	<ul class="text-body-secondary fs-5 no-bullets">
+		<li>
+			<strong>Series:</strong>
+			<input
+				type="text"
+				list="series-list"
+				placeholder="[Series]"
+				class="textfield-seamless"
+				name="series"
+				maxlength="30"
+				required />
+
+			<datalist id="series-list">
+				{% for series_name in series_map.values() %}
+					<option value="{{ series_name }}" />
+				{% endfor %}
+			</datalist>
+		</li>
+
+		<li>
+			<strong>No-Caffeine Item:</strong>
+			<input
+				type="checkbox"
+				class="form-check-input ms-1"
+				name="notCaffeinated" />
+		</li>
+
+		<li>
+			<strong>Cold Item:</strong>
+			<input
+				type="checkbox"
+				class="form-check-input ms-1"
+				name="cold" />
+		</li>
+
+		<li>
+			<strong>Stock:</strong>
+			<input
+				type="number"
+				placeholder="[Stock]"
+				class="textfield-seamless"
+				name="stock"
+				min="0"
+				required />
+		</li>
+
+		<li>
+			<strong>Description:</strong>
+			<input
+				type="text"
+				placeholder="[Description]"
+				class="textfield-seamless"
+				name="description"
+				maxlength="65"
+				required />
+		</li>
+	</ul>
+
+	<hr class="my-4" />
+
+	<section>
+		<h2 class="mb-4">Item Image</h2>
+
+		<p id="img-notification"></p>
+
+		<input type="file" id="img-input" name="image" accept="image/*"
+			onchange="notifyImageSelected()" required />
+
+		<div class="d-flex justify-content-end gap-3">
+			<button id="img-button" class="btn btn-primary btn-lg" onclick="selectImage(); return false;">
+				Upload image
+			</button>
+		</div>
+	</section>
+
+	<hr class="my-4" />
+
+	<div class="d-flex gap-3">
+		<button type="submit" class="btn btn-primary btn-lg">Create item</button>
+
+		<a href="{{ url_for('inventory') }}" class="btn btn-outline-secondary btn-lg">
+			Cancel
+		</a>
+	</div>
+</form>
+
+<script>
+	const imgInput = document.getElementById('img-input');
+	const imgNotification = document.getElementById('img-notification');
+	const imgButton = document.getElementById('img-button');
+
+	function selectImage() {
+		imgInput.click();
+	}
+
+	function notifyImageSelected() {
+		if (imgInput.files.length > 0) {
+			const fileName = imgInput.files[0].name;
+			imgNotification.innerHTML = `<strong>${fileName}</strong> selected.`;
+			imgNotification.classList.remove('text-body-secondary');
+			imgNotification.classList.add('text-body-primary');
+
+			imgButton.innerHTML = 'Change image';
+			imgButton.classList.remove('btn-primary');
+			imgButton.classList.add('btn-outline-primary');
+		} else {
+			imgNotification.innerHTML = '';
+			imgNotification.classList.remove('text-body-primary');
+			imgNotification.classList.add('text-body-secondary');
+
+			imgButton.innerHTML = 'Upload image';
+			imgButton.classList.remove('btn-outline-primary');
+			imgButton.classList.add('btn-primary');
+		}
+	}
+</script>
+{% endblock %}

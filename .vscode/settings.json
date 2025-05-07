@@ -11,5 +11,8 @@
 	],
 	"[python]": {
 		"editor.defaultFormatter": "ms-python.black-formatter"
+	},
+	"[html]": {
+		"editor.formatOnSave": false
 	}
 }

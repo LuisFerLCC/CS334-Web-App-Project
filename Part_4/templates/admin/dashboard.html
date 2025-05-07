@@ -10,85 +10,162 @@
       display: none !important;
     }
   </style>
+
+  {% block extra_admin_css %}
+  {% endblock %}
 {% endblock %}
 
+
+
 {% block content %}
-
-
 <div class="d-flex flex-grow-1">
-  <main class="container-xl mt-5">
-    <h1 class="mb-4">Admin Dashboard</h1>
 
-      
-        <!--orders-->
-        <section id="active-orders" class="mb-5">
-          <h2>Active Orders</h2>
-          <table class="table table-striped align-middle">
-            <thead>
-              <tr><th>Date</th><th>Name</th><th>Items</th><th>Address</th><th>Status</th></tr>
-            </thead>
-            <tbody>
-              {% for order in orders %}
-              <tr>
-                <td>{{ order.date }}</td>
-                <td>{{ order.customer_name }}</td>
-                <td>{{ order.item_count }}</td>
-                <td>{{ order.address }}</td>
-                <td><span class="text-{{ order.status_class }}">{{ order.status }}</span></td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </section>
-      
-        <!-- inventory -->
-        <section id="inventory" class="mb-5">
-          <h2>Inventory</h2>
-          <table class="table table-striped align-middle">
-            <thead>
-              <tr><th>ID</th><th>Series</th><th>Name</th><th>No Caf.</th><th>Cold</th><th>Stock</th><th>Price</th></tr>
-            </thead>
-            <tbody>
-                {% for item in inventory[:10] %}
-              <tr>
-                <td>{{ item.sku }}</td>
-                <td>{{ item.series }}</td>
-                <td>{{ item.name }}</td>
-                <td><input type="checkbox" {% if not item.caffeinated %}checked{% endif %} disabled /></td>
-                <td><input type="checkbox" {% if item.cold %}checked{% endif %} disabled /></td>
-                <td>{{ item.stock }}</td>
-                <td>${{ item.price }}</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </section>
-        <!-- messages -->
-    <section id="messages">
-        <h2>
-          Messages
-          <a href="{{ url_for('messages') }}" class="btn btn-outline-primary btn-sm ms-2">View all</a>
-        </h2>
-        <div id="messages-container" class="my-4">
-          {% for msg in messages %}
-          <div class="card card-body mb-3">
-            <h4 class="card-title">{{ msg.SenderName }}</h4>
-            <a href="mailto:{{ msg.Email }}">{{ msg.email }}</a>
-            {% if msg.Phone %}<a href="tel:{{ msg.phone }}">{{ msg.phone }}</a>{% endif %}
-            <hr />
-            <p>{{ msg.Body|replace('\n', '<br />')|safe }}</p>
-            
-            </form>
+  <main class="container-xl mt-5">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
           </div>
-          {% endfor %}
-      </div>
-    </section>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+    {% block admin_content %}
+      <h1 class="mb-4">Admin Dashboard</h1>
+          <!--orders-->
+          <section id="active-orders" class="mb-5">
+            <h2>
+              Active Orders
+              {% if orders and session.get('can_manage_orders') %}
+                <a href="{{ url_for('orders') }}" class="btn btn-outline-primary btn-sm ms-2">View all</a>
+              {% endif %}
+            </h2>
+            {% if orders %}
+              <table class="table table-striped align-middle">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Name</th>
+                    <th>Items</th>
+                    <th>Address</th>
+                    <th>Status</th>
+
+                    {% if session.get('can_manage_orders') %}
+                      <th>More info</th>
+                    {% endif %}
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for order in orders %}
+                  <tr>
+                    <td>{{ order.date }}</td>
+                    <td>{{ order.customer_name }}</td>
+                    <td>{{ order.item_count }}</td>
+                    <td>{{ order.address }}</td>
+                    <td><span class="text-{{ order.status_class }}">{{ order.status }}</span></td>
+
+                    {% if session.get('can_manage_orders') %}
+                      <td><a class="btn btn-outline-primary btn-sm" href="{{ url_for('edit_order', order_id=order.id) }}">More info</a></td>
+                    {% endif %}
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            {% else %}
+              <p>No active orders.</p>
+            {% endif %}
+          </section>
+
+          <!-- inventory -->
+          <section id="inventory" class="mb-5">
+            <h2>
+              Inventory
+              {% if session.get('can_manage_inventory') %}
+                <a href="{{ url_for('inventory') }}" class="btn btn-outline-primary btn-sm ms-2">View all</a>
+              {% endif %}
+            </h2>
+            <table class="table table-striped align-middle">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Series</th>
+                  <th>Name</th>
+                  <th>No Caf.</th>
+                  <th>Cold</th>
+                  <th>Stock</th>
+                  <th>Price</th>
+
+                  {% if session.get('can_manage_inventory') %}
+                    <th>Edit</th>
+                  {% endif %}
+                </tr>
+              </thead>
+              <tbody>
+                {% for item in inventory %}
+                  <tr>
+                    <td>{{ item.sku }}</td>
+                    <td>{{ item.series }}</td>
+                    <td>{{ item.name }}</td>
+                    <td><input type="checkbox" {% if item.notCaffeinated %}checked{% endif %} disabled /></td>
+                    <td><input type="checkbox" {% if item.cold %}checked{% endif %} disabled /></td>
+                    <td>{{ item.stock }}</td>
+                    <td>${{ "%.2f"|format(item.price) }}</td>
+
+                    {% if session.get('can_manage_inventory') %}
+                      <td>
+                        <a
+                          class="btn btn-outline-primary btn-sm"
+                          href="{{ url_for('edit_item', item_id=item.sku) }}">
+                          Edit
+                        </a>
+                      </td>
+                    {% endif %}
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </section>
+          <!-- messages -->
+      <section id="messages">
+          <h2>
+            Messages
+            {% if messages and session.get('can_manage_messages') %}
+              <a href="{{ url_for('messages') }}" class="btn btn-outline-primary btn-sm ms-2">View all</a>
+            {% endif %}
+          </h2>
+          {% if messages %}
+            <div id="messages-container" class="my-4">
+              {% for msg in messages %}
+              <div class="card card-body mb-3">
+                <h4 class="card-title">{{ msg.SenderName }}</h4>
+                <a href="mailto:{{ msg.Email }}">{{ msg.email }}</a>
+                {% if msg.Phone %}<a href="tel:{{ msg.phone }}">{{ msg.phone }}</a>{% endif %}
+                <hr />
+                <p>{{ msg.Body|replace('\n', '<br />')|safe }}</p>
+
+                {% if session.get('can_manage_messages') %}
+                <form method="post" action="{{ url_for('messages') }}" onsubmit="return confirm('Are you sure you want to delete this message?');">
+                  <input type="hidden" name="message_id" value="{{ msg.MessageID }}" />
+                  <button type="submit" class="btn btn-outline-danger">Delete</button>
+                </form>
+                {% endif %}
+              </div>
+              {% endfor %}
+          </div>
+          {% else %}
+            <p>No messages.</p>
+          {% endif %}
+      </section>
+    {% endblock %}
   </main>
 <!-- sidebar -->
   <aside class="p-4">
     <h4 class="mb-3">Dashboard</h4>
     <ul id="views" class="no-bullets">
-      <li>Main dashboard</li>
+      <li>
+        <a href="{{ url_for('admin_dashboard') }}">Main dashboard</a>
+      </li>
       {% if session.get('can_manage_orders') %}
         <li><a href="{{ url_for('orders') }}">Manage active orders</a></li>
       {% endif %}

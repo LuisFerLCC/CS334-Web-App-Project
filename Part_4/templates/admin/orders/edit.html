@@ -1,0 +1,129 @@
+{% extends "admin/dashboard.html" %}
+
+{% block title %}{{ order.customer_name }}'s order{% endblock %}
+
+{% block extra_admin_css %}
+	<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/orders/edit.css') }}" />
+{% endblock %}
+
+{% block admin_content %}
+	<h1 class="mb-3">
+		{{ order.customer_name }}'s order
+		<small class="text-body-tertiary">
+			at {{ order.date }}
+		</small>
+	</h1>
+
+	<ul class="text-body-secondary fs-5 no-bullets">
+		<li>
+			<strong>Order ID:</strong>
+			{{ order.id }}
+		</li>
+
+		<li>
+			<strong>Delivery Address:</strong>
+			{{ order.address }}
+		</li>
+
+		<li>
+			<strong>Phone Number:</strong>
+			{{ order.phone }}
+		</li>
+
+		<li>
+			<strong>Status:</strong>
+			<span class="text-{{ order.status_class }}">{{ order.status.Name }}</span>
+		</li>
+	</ul>
+
+	<hr class="my-4" />
+
+	<section>
+		<h2 class="mb-4">Items</h2>
+
+		<ul class="no-bullets">
+			{% for item in order.itemsList %}
+				<li class="card">
+					<div class="row g-0">
+						<div class="item-img-container">
+							<img
+								src="{{ url_for('static', filename='img/products/' ~ item.imageURL) }}"
+								class="img-fluid rounded-start" />
+						</div>
+
+						<div class="col-md-8">
+							<div class="card-body">
+								<h5 class="card-title">
+									{{ item.name }}
+									{% if item.amount > 1 %}
+										<small class="text-body-secondary">
+											x{{ item.amount }}
+										</small>
+									{% endif %}
+
+									{% if not item.isActive %}
+										<small class="badge bg-danger">
+											DISCONTINUED
+										</small>
+									{% endif %}
+								</h5>
+
+								<p class="card-text">
+									<small class="text-body-secondary">
+										ID: {{ item.id }}
+									</small>
+								</p>
+
+								{% if item.specialInstructions %}
+									<p class="card-text">
+										<strong>Special Instructions:</strong>
+										{{ item.specialInstructions }}
+									</p>
+								{% endif %}
+							</div>
+						</div>
+					</div>
+				</li>
+			{% endfor %}
+		</ul>
+	</section>
+
+	<hr class="my-4" />
+
+	<section class="mb-4">
+		<h2 class="mb-4">Actions</h2>
+
+		<form method="post">
+			<div class="d-flex gap-3 align-items-center flex-wrap">
+				<select class="form-select form-select-lg w-auto" name="status">
+					{% for status in statuses %}
+						{% if status.StatusID != 0 %}
+							<option value="{{ status.StatusID }}"
+								{% if status.StatusID == order.status.StatusID %}selected{% endif %}>
+								{{ status.Name }}
+							</option>
+						{% endif %}
+					{% endfor %}
+				</select>
+
+				<button type="submit" class="btn btn-secondary btn-lg">
+					Update status
+				</button>
+
+				{% if order.status.StatusID != 0 and order.status.StatusID != completed_id %}
+					<a class="btn btn-primary btn-lg"
+						href="{{ url_for('next_status', order_id=order.id) }}">
+						Move to Next Phase
+					</a>
+				{% endif %}
+
+				{% if order.status.StatusID != 0 and order.status.StatusID != completed_id %}
+					<a class="btn btn-outline-danger btn-lg"
+						href="{{ url_for('cancel_order', order_id=order.id) }}">
+						Cancel Order
+					</a>
+				{% endif %}
+			</div>
+		</form>
+	</section>
+{% endblock %}

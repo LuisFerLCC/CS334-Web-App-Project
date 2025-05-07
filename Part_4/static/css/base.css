@@ -17,18 +17,16 @@ html, body {
   }
 
 body {
-	font-family: 'Roboto', sans-serif;
-	margin: 0; padding: 0;
+	/* TODO: Should we actually override the Bootstrap font setting? */
+	/* font-family: "Roboto", sans-serif; */
+	margin: 0;
+	padding: 0;
+
+	display: flex;
+	flex-direction: column;
+	min-height: 100vh;
 }
-#navbar {
-	background-color: #c4fef2;
-}
-#navbar .nav-link {
-	color: #004234; margin-left: 1rem;
-}
-#navbar .nav-link:hover {
-	color: #008e71;
-}
+
 #navbar {
 	padding: 10px 30px;
 
@@ -71,40 +69,87 @@ body {
 
 	display: block;
 }
+
+.alert {
+	margin: 1rem;
+}
+
 .footer {
-	background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org…"></svg>')
-				no-repeat center top;
+	position: relative;
+	background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"><path fill="%23c6ffaf" fill-opacity="1" d="M0,192L60,181.3C120,171,240,149,360,122.7C480,96,600,64,720,48C840,32,960,32,1080,48C1200,64,1320,96,1380,112L1440,128L1440,320L1380,320C1320,320,1200,320,1080,320C960,320,840,320,720,320C600,320,480,320,360,320C240,320,120,320,60,320L0,320Z"></path></svg>')
+		no-repeat center top;
 	background-size: cover;
-	padding: 200px 0 50px;
-	color: black;
+	padding-top: 200px;
+	padding-bottom: 50px;
+	width: 100%;
+	color: #154a00;
 }
+
 .footer-container {
-	max-width:1200px; margin:0 auto; padding:20px;
+	max-width: 1200px;
+	margin: 0 auto;
+	padding: 20px;
 }
-.footer-logo {
-	max-height:80px;
+
+.footer .row {
+	display: flex;
+	justify-content: space-between;
+	flex-wrap: wrap;
 }
+
+.footer .footer-logo {
+	max-height: 80px;
+	width: auto;
+	margin-bottom: 15px;
+}
+
 .social-icons a {
-	color:black; margin-right:15px; font-size:1.5rem;
+	font-size: 1.5rem;
+	color: inherit;
+	margin-right: 15px;
+	transition: transform 0.3s ease, color 0.3s ease;
 }
+
 .social-icons a:hover {
-	transform:scale(1.2);
+	transform: scale(1.2);
+	color: #0c2a00;
 }
+
 .footer-heading {
-	font-size:1.2rem; font-weight:bold; text-transform:uppercase;
+	font-size: 1.2rem;
+	font-weight: bold;
+	margin-bottom: 10px;
+	text-transform: uppercase;
 }
+
 .footer-links {
-	list-style:none; padding:0;
+	list-style: none;
+	padding: 0;
 }
+
 .footer-links li {
-	margin-bottom:8px;
+	margin-bottom: 8px;
 }
+
 .footer-links a {
-	color:black; text-decoration:none;
+	text-decoration: none;
+	color: inherit;
+	transition: color 0.3s ease;
 }
+
 .footer-links a:hover {
-	color:#222;
+	color: #0c2a00;
 }
+
 .footer-text {
-	font-size:1rem;
+	font-size: 1rem;
+	margin-bottom: 5px;
+}
+
+.footer .bottom-bar {
+	text-align: center;
+	font-size: 0.9rem;
+	padding-top: 20px;
+	border-top: 1px solid rgba(255, 255, 255, 0.3);
+	margin-top: 20px;
 }
