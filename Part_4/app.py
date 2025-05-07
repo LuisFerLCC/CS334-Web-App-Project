@@ -106,6 +106,14 @@ class OrderedItems(db.Model):
     item = db.relationship("Item")
 
 
+class Status(db.Model):
+    __tablename__ = "Status"
+    __table_args__ = {"extend_existing": True}
+
+    StatusID = db.Column(db.Integer, primary_key=True)
+    Name = db.Column(db.String(25))
+
+
 # This is the base page for index.html template, pulls 3 items to show as popular drinks.
 @app.route("/")
 def index():
@@ -375,7 +383,7 @@ def admin_dashboard():
     if "user_id" not in session:
         return redirect(url_for("admin_login"))
 
-    raw_items = Item.query.all()
+    raw_items = Item.query.limit(5).all()
     inventory = []
     for i in raw_items:
         inventory.append(
@@ -393,24 +401,24 @@ def admin_dashboard():
     messages = Message.query.order_by(Message.MessageID.desc()).limit(3).all()
 
     users = User.query.all()
-    raw_orders = Order.query.order_by(Order.DateTime.desc()).limit(5).all()
-    status_map = {1: "Pending", 2: "Completed", 3: "Cancelled"}
+
+    raw_statuses = Status.query.all()
+    status_map = {s.StatusID: s.Name for s in raw_statuses}
+    completed_id = max(status_map.keys()) if status_map else 0
+    raw_orders = (
+        Order.query.where(Order.StatusID != completed_id)
+        .order_by(Order.DateTime.desc())
+        .limit(5)
+        .all()
+    )
     orders = [
         {
-            "date": o.DateTime.strftime("%Y-%m-%d") if o.DateTime else "",
+            "date": o.DateTime.strftime("%Y-%m-%d - %H:%M:%S") if o.DateTime else "",
             "customer_name": f"{o.CustomerFirstName} {o.CustomerLastName}",
             "item_count": sum(i.Amount for i in o.order_items),
             "address": o.Address,
             "status": status_map.get(o.StatusID, "Unknown"),
-            "status_class": (
-                "success"
-                if status_map.get(o.StatusID, "").lower() == "completed"
-                else (
-                    "warning"
-                    if status_map.get(o.StatusID, "").lower() == "pending"
-                    else "secondary"
-                )
-            ),
+            "status_class": ("secondary" if o.StatusID == 0 else "warning"),
         }
         for o in raw_orders
     ]

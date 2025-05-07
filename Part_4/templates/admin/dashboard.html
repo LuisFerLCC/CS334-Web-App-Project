@@ -19,28 +19,52 @@
   <main class="container-xl mt-5">
     <h1 class="mb-4">Admin Dashboard</h1>
 
-      
+
         <!--orders-->
         <section id="active-orders" class="mb-5">
-          <h2>Active Orders</h2>
-          <table class="table table-striped align-middle">
-            <thead>
-              <tr><th>Date</th><th>Name</th><th>Items</th><th>Address</th><th>Status</th></tr>
-            </thead>
-            <tbody>
-              {% for order in orders %}
-              <tr>
-                <td>{{ order.date }}</td>
-                <td>{{ order.customer_name }}</td>
-                <td>{{ order.item_count }}</td>
-                <td>{{ order.address }}</td>
-                <td><span class="text-{{ order.status_class }}">{{ order.status }}</span></td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
+          <h2>
+            Active Orders
+            {% if orders and session.get('can_manage_orders') %}
+              <a href="{{ url_for('orders') }}" class="btn btn-outline-primary btn-sm ms-2">View all</a>
+            {% endif %}
+          </h2>
+          {% if orders %}
+            <table class="table table-striped align-middle">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Name</th>
+                  <th>Items</th>
+                  <th>Address</th>
+                  <th>Status</th>
+
+                  {% if session.get('can_manage_orders') %}
+                    <th>More info</th>
+                  {% endif %}
+                </tr>
+              </thead>
+              <tbody>
+                {% for order in orders %}
+                <tr>
+                  <td>{{ order.date }}</td>
+                  <td>{{ order.customer_name }}</td>
+                  <td>{{ order.item_count }}</td>
+                  <td>{{ order.address }}</td>
+                  <td><span class="text-{{ order.status_class }}">{{ order.status }}</span></td>
+
+                  {% if session.get('can_manage_orders') %}
+                    <!-- TODO change to link -->
+                    <td><button class="btn btn-outline-primary btn-sm">More info</button></td>
+                  {% endif %}
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          {% else %}
+            <p>No active orders.</p>
+          {% endif %}
         </section>
-      
+
         <!-- inventory -->
         <section id="inventory" class="mb-5">
           <h2>Inventory</h2>
@@ -77,7 +101,7 @@
             {% if msg.Phone %}<a href="tel:{{ msg.phone }}">{{ msg.phone }}</a>{% endif %}
             <hr />
             <p>{{ msg.Body|replace('\n', '<br />')|safe }}</p>
-            
+
             </form>
           </div>
           {% endfor %}
