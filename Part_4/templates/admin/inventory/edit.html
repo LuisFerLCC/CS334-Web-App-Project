@@ -1,0 +1,164 @@
+{% extends "admin/dashboard.html" %}
+
+{% block title %}Edit {{ item.Name }}{% endblock %}
+
+{% block extra_admin_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/orders/edit.css') }}" />
+{% endblock %}
+
+{% block admin_content %}
+<form enctype="multipart/form-data" method="post">
+	<h1 class="mb-3">
+		<input
+			type="text"
+			placeholder="[Name]"
+			class="textfield-seamless"
+			name="name"
+			value="{{ item.Name }}"
+			maxlength="30"
+			required />
+
+		<small class="text-body-tertiary">
+			$<input
+				type="number"
+				placeholder="[Price]"
+				class="textfield-seamless"
+				name="price"
+				value="{{ '%.2f'|format(item.Price) }}"
+				min="0.00"
+				step="0.01"
+				required />
+		</small>
+	</h1>
+
+	{% if not item.IsActive %}
+		<div class="alert alert-warning" role="alert">
+			This item is discontinued and will not be shown in the store.
+		</div>
+	{% endif %}
+
+	<ul class="text-body-secondary fs-5 no-bullets">
+		<li>
+			<strong>Item ID:</strong>
+			{{ item.ItemID }}
+		</li>
+
+		<li>
+			<strong>Series:</strong>
+			<input
+				type="text"
+				list="series-list"
+				placeholder="[Series]"
+				class="textfield-seamless"
+				name="series"
+				value="{{ series_map[item.SeriesID] }}"
+				maxlength="30"
+				required />
+
+			<datalist id="series-list">
+				{% for series_name in series_map.values() %}
+					<option value="{{ series_name }}" />
+				{% endfor %}
+			</datalist>
+		</li>
+
+		<li>
+			<strong>No-Caffeine Item:</strong>
+			<input
+				type="checkbox"
+				class="form-check-input ms-1"
+				name="notCaffeinated"
+				{% if item.IsNoCaffeine %}checked{% endif %} />
+		</li>
+
+		<li>
+			<strong>Cold Item:</strong>
+			<input
+				type="checkbox"
+				class="form-check-input ms-1"
+				name="cold"
+				{% if item.IsCold %}checked{% endif %} />
+		</li>
+
+		<li>
+			<strong>Stock:</strong>
+			<input
+				type="number"
+				placeholder="[Stock]"
+				class="textfield-seamless"
+				name="stock"
+				value="{{ item.Stock }}"
+				min="0"
+				required />
+		</li>
+
+		<li>
+			<strong>Description:</strong>
+			<input
+				type="text"
+				placeholder="[Description]"
+				class="textfield-seamless"
+				name="description"
+				value="{{ item.Description }}"
+				maxlength="65"
+				required />
+		</li>
+	</ul>
+
+	<div class="d-flex justify-content-end gap-3">
+		<a href="{{ url_for('inventory') }}" class="btn btn-outline-secondary btn-lg">
+			Cancel
+		</a>
+		<button type="submit" class="btn btn-primary btn-lg">Save changes</button>
+	</div>
+</form>
+
+<hr class="my-4" />
+
+<section>
+	<h2 class="mb-4">Item Image</h2>
+
+	<div class="d-flex justify-content-center">
+		<img
+			id="item-image"
+			src="{{ url_for('static', filename='img/products/' ~ item.ImageURL) }}" />
+	</div>
+
+	<form id="img-form" action="{{ url_for('upload_item_image', item_id=item.ItemID) }}" method="post" enctype="multipart/form-data">
+		<input type="file" id="img-input" name="image" accept="image/*"
+			onchange="uploadImage()" />
+	</form>
+
+	<div class="d-flex justify-content-end gap-3">
+		<button class="btn btn-outline-primary btn-lg"
+			onclick="selectImage()">
+			Upload new image
+		</button>
+	</div>
+</section>
+
+<hr class="my-4" />
+
+<section class="mb-4">
+	<h2 class="mb-4">Other actions</h2>
+
+	<form class="d-flex gap-3" action="{{ url_for('discontinue_item' if item.IsActive else 'reactivate_item', item_id=item.ItemID) }}" method="post">
+		<button type="submit" class="btn btn-{{ 'danger' if item.IsActive else 'success' }} btn-lg">
+			Mark as {{ 'discontinued' if item.IsActive else 'active' }}
+		</button>
+	</for>
+</section>
+
+<script>
+	const imgForm = document.getElementById('img-form');
+	const imgInput = document.getElementById('img-input');
+
+	function selectImage() {
+		imgInput.click();
+	}
+
+	function uploadImage() {
+		imgForm.submit();
+	}
+</script>
+{% endblock %}

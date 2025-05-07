@@ -6,27 +6,35 @@
 {% block content %}
     <div class="shop-container">
         <!-- Checks for any flashed messages related to adding an item to the cart or making a successful payment and displays them at the top after the header. -->
-        {% with messages = get_flashed_messages() %}
+        {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
-                <div class="alert alert-success">{{ messages[0] }}</div>
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
             {% endif %}
         {% endwith %}
         <div class="products">
             <!-- Iterates through all of the items returned by the get all from the app.py and then creates the cards for each one, as well as the selectors and add to cart buttons. -->
             {% for item in items %}
                 <div class="product-card">
-                    <img src="{{ url_for('static', filename='img/' + item.ImageURL) }}" alt="{{ item.Name }}">
+                    <img src="{{ url_for('static', filename='img/products/' + item.ImageURL) }}" alt="{{ item.Name }}">
                     <h2>{{ item.Name }}</h2>
                     <p>${{ "%.2f"|format(item.Price) }}</p>
+                    <p>{{ item.Description }}</p>
                     <p class="text-muted">{{ 'Iced' if item.IsCold else 'Hot' }} | {{ 'Decaf' if item.IsNoCaffeine else 'Caffeinated' }}</p>
                     <!-- POST method here for adding to cart and reflects the function in app.py. -->
                     <form action="{{ url_for('add_to_cart') }}" method="POST">
+                        <p class="text-muted my-1">Stock: {{ item.Stock }}</p>
                         <div class="quantity-selector">
                             <button type="button" class="decrease">-</button>
-                            <input type="number" name="quantity" value="1" min="1">
+                            <input type="number" name="quantity" value="1" min="1" max="{{ item.Stock }}" required>
                             <button type="button" class="increase">+</button>
                         </div>
                         <input type="hidden" name="itemId" value="{{ item.ItemID }}">
+                        <textarea
+                            name="specialInstructions"
+                            placeholder="Optional personal touches (extra hot, no foam, etc.)"
+                            maxlength="100"></textarea>
                         <button type="submit" class="btn btn-success">Add to Cart</button>
                     </form>
                 </div>

@@ -5,6 +5,13 @@
 {% endblock %}
 <!-- Pulled the HTML to match the previous part 3 data -->
 {% block content %}
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-success">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
     <div class="bg-image"></div>
     <section class="contact-section">
         <article class="contact-item">
@@ -28,11 +35,11 @@
     <!-- Utilizing POST down here to reflect back in app.py and pass the information back to be submitted into the Message table in the DB. -->
     <section class="contact-form">
         <form method="POST" id="contact-form">
-            <input type="text"  name="name"        placeholder="Your Name"  required/>
-            <input type="email" name="email"       placeholder="Your Email" required/>
+            <input type="text"  name="name"        placeholder="Your Name"  maxlength="70" required/>
+            <input type="email" name="email"       placeholder="Your Email" maxlength="50" required/>
             <input type="tel"   name="number"      placeholder="Your Phone Number"/>
             <textarea name="message" id="customer-message"
-                        placeholder="Enter Your Message" required></textarea>
+                        placeholder="Enter Your Message" required maxlength="1000"></textarea>
             <input type="submit" value="Submit"/>
         </form>
         <img src="{{ url_for('static',filename='img/Contact-Images/cupatea.JPG') }}" alt=""/>

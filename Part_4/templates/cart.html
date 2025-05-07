@@ -19,6 +19,7 @@
                     <tr>
                     <th>Item</th>
                     <th>Quantity</th>
+                    <th>Special instructions</th>
                     <th>Price</th>
                     <th>Total</th>
                     <th>Remove</th>
@@ -30,6 +31,7 @@
                     <tr>
                     <td>{{ e.item.Name }}</td>
                     <td>{{ e.quantity }}</td>
+                    <td>{{ e.specialInstructions if e.specialInstructions is not none else "-" }}</td>
                     <td>${{ "%.2f"|format(e.item.Price) }}</td>
                     <td>${{ "%.2f"|format(e.subtotal) }}</td>
                     <td>

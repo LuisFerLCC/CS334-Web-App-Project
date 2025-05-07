@@ -82,6 +82,7 @@ CREATE TABLE Item
     SeriesID     integer               not null
         constraint Item_fk_SeriesID
             references Series,
+    IsActive     boolean default true  not null,
     constraint Item_chk_Description_Length
         check (length(Item.Description) > 0),
     constraint Item_chk_ImageURL_Length
