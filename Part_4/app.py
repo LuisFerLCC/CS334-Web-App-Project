@@ -573,9 +573,71 @@ def inventory():
     return render_template("admin/inventory/all.html", inventory=inventory)
 
 
-@app.route("/admin/inventory/new")
+@app.route("/admin/inventory/new", methods=["GET", "POST"])
 def new_item():
-    return "TODO"
+    if "user_id" not in session:
+        return redirect(url_for("admin_login"))
+
+    if not session.get("can_manage_inventory"):
+        flash("You do not have permission to view this page.", "danger")
+        return redirect(url_for("admin_dashboard"))
+
+    if request.method == "POST":
+        item = Item(
+            Name=request.form["name"],
+            Description=request.form["description"],
+            IsNoCaffeine=bool(request.form.get("notCaffeinated")),
+            IsCold=bool(request.form.get("cold")),
+            Stock=request.form["stock"],
+            Price=request.form["price"],
+            IsActive=True,
+        )
+
+        series_name = request.form.get("series")
+        series = Series.query.filter_by(Name=series_name).first()
+        if not series:
+            series = Series(Name=series_name)
+            db.session.add(series)
+            series = Series.query.filter_by(Name=series_name).first()
+
+        item.SeriesID = series.SeriesID
+
+        if "image" not in request.files:
+            db.session.rollback()
+            flash("No file part (for the item image)", "danger")
+            return redirect(url_for("new_item"))
+
+        file = request.files["image"]
+        if file.filename == "":
+            db.session.rollback()
+            flash("No selected file (for the item image)", "danger")
+            return redirect(url_for("new_item"))
+
+        if file and file.filename.rsplit(".", 1)[1].lower() in ["png", "jpg", "jpeg"]:
+            filename = secure_filename(file.filename)
+            file_path = os.path.join(item_images_dir, filename)
+            file.save(file_path)
+
+            item.ImageURL = filename
+
+            db.session.add(item)
+            db.session.commit()
+
+            item_id = Item.query.order_by(Item.ItemID.desc()).first().ItemID
+            flash("Item created successfully.", category="success")
+            return redirect(url_for("edit_item", item_id=item_id))
+
+        db.session.rollback()
+        flash("Invalid file type. Only PNG, JPG, and JPEG are allowed.", "danger")
+        return redirect(url_for("new_item"))
+
+    raw_series = Series.query.all()
+    series_map = {s.SeriesID: s.Name for s in raw_series}
+
+    return render_template(
+        "admin/inventory/new.html",
+        series_map=series_map,
+    )
 
 
 @app.route("/admin/inventory/<int:item_id>", methods=["GET", "POST"])
