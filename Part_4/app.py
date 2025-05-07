@@ -402,7 +402,7 @@ def admin_dashboard():
             }
         )
 
-    messages = Message.query.order_by(Message.MessageID.desc()).limit(3).all()
+    messages = Message.query.order_by(Message.MessageID.asc()).limit(3).all()
 
     users = User.query.all()
 
