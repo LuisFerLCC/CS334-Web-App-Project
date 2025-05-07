@@ -550,7 +550,34 @@ def inventory():
 def orders():
     if "user_id" not in session:
         return redirect(url_for("admin_login"))
-    return render_template("admin/orders.html")
+
+    if not session.get("can_manage_orders"):
+        flash("You do not have permission to view this page.", "danger")
+        return redirect(url_for("admin_dashboard"))
+
+    statuses = Status.query.all()
+    completed_id = max(s.StatusID for s in statuses) if statuses else 0
+    raw_orders = Order.query.order_by(Order.DateTime.desc()).all()
+
+    orders = [
+        {
+            "date": o.DateTime.strftime("%Y-%m-%d - %H:%M:%S") if o.DateTime else "",
+            "customer_name": f"{o.CustomerFirstName} {o.CustomerLastName}",
+            "item_count": sum(i.Amount for i in o.order_items),
+            "address": o.Address,
+            "status": next(
+                (s.Name for s in statuses if s.StatusID == o.StatusID), "Unknown"
+            ),
+            "status_class": (
+                "success"
+                if o.StatusID == completed_id
+                else "secondary" if o.StatusID == 0 else "warning"
+            ),
+        }
+        for o in raw_orders
+    ]
+
+    return render_template("admin/orders/all.html", orders=orders)
 
 
 @app.route("/sw.js")
