@@ -163,6 +163,7 @@ def contact():
         )
         db.session.add(msg)
         db.session.commit()
+        flash("Message sent!")
         return redirect(url_for("contact"))
     return render_template("contact.html")
 
