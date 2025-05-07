@@ -136,12 +136,19 @@ def cart():
     cart = session.get("cart", {})
     entries = []
     total = 0.0
-    for itemId, qunatity in cart.items():
+    for itemId, order_descriptor in cart.items():
         item = Item.query.get(itemId)
         if item:
-            sub = item.Price * qunatity
+            sub = item.Price * order_descriptor[0]
             total += sub
-            entries.append({"item": item, "quantity": qunatity, "subtotal": sub})
+            entries.append(
+                {
+                    "item": item,
+                    "quantity": order_descriptor[0],
+                    "specialInstructions": order_descriptor[1],
+                    "subtotal": sub,
+                }
+            )
     return render_template("cart.html", entries=entries, total=total)
 
 
@@ -210,28 +217,28 @@ def checkout():
     cvv = request.form.get("cvv", "").strip()
 
     if not all([first, last, email, phone, address, cardnumber, expiration, cvv]):
-        flash("All fields are required.")
+        flash("All fields are required.", category="danger")
         return redirect(url_for("cart"))
     if not re.fullmatch(r"\d{13,19}", cardnumber):
-        flash("Invalid card number. Must be 13–19 digits.")
+        flash("Invalid card number. Must be 13–19 digits.", category="danger")
         return redirect(url_for("cart"))
     if not re.fullmatch(r"\d{3,4}", cvv):
-        flash("Invalid CVV. Must be 3 or 4 digits.")
+        flash("Invalid CVV. Must be 3 or 4 digits.", category="danger")
         return redirect(url_for("cart"))
     if not re.fullmatch(r"(0[1-9]|1[0-2])/([0-9]{2})", expiration):
-        flash("Expiration must be in MM/YY format.")
+        flash("Expiration must be in MM/YY format.", category="danger")
         return redirect(url_for("cart"))
 
     cart = session.get("cart", {})
     if not cart:
-        flash("Your cart is empty.")
+        flash("Your cart is empty.", category="danger")
         return redirect(url_for("cart"))
 
     total = 0.0
-    for item_id, qty in cart.items():
+    for item_id, order_descriptor in cart.items():
         item = Item.query.get(item_id)
         if item:
-            total += item.Price * qty
+            total += item.Price * order_descriptor[0]
 
     # Adding the order
     order = Order(
@@ -244,13 +251,37 @@ def checkout():
         StatusID=1,
     )
     db.session.add(order)
-    db.session.commit()
+    # Removed .commit() here since we need all INSERTs to be in the same
+    # transaction, so that they either all succeed or all fail.
+
+    # Get order ID
+    order = Order.query.order_by(Order.OrderID.desc()).first()
+    if not order:
+        flash("Failed to create order.", category="danger")
+        return redirect(url_for("cart"))
 
     # Add ordered items
-    for item_id, quantity in cart.items():
+    for item_id, order_descriptor in cart.items():
         db.session.add(
-            OrderedItems(OrderID=order.OrderID, ItemID=item_id, Amount=quantity)
+            OrderedItems(
+                OrderID=order.OrderID,
+                ItemID=item_id,
+                Amount=order_descriptor[0],
+                SpecialInstructions=order_descriptor[1],
+            )
         )
+
+        # Reduce each item's stock by the ordered amount
+        item = Item.query.get(item_id)
+        if item:
+            item.Stock -= order_descriptor[0]
+            if item.Stock < 0:
+                flash(f"Not enough stock for {item.Name}.", category="danger")
+                db.session.rollback()
+                return redirect(url_for("cart"))
+
+            db.session.add(item)
+
     db.session.commit()
 
     # Compose email body
@@ -259,16 +290,20 @@ def checkout():
         "",
         "Thank you for your purchase! Here is your receipt:",
         "",
+        f"Order ID: {order.OrderID}",
+        f"Date: {order.DateTime.strftime('%Y-%m-%d %H:%M:%S') if order.DateTime else ''}",
+        f"Address: {order.Address}",
+        "",
     ]
 
     total = 0
-    for itemId, quantity in session.get("cart", {}).items():
+    for itemId, order_descriptor in session.get("cart", {}).items():
         item = Item.query.get(itemId)
         if item:
-            subtotal = item.Price * quantity
+            subtotal = item.Price * order_descriptor[0]
             total += subtotal
             body_lines.append(
-                f"{item.Name} x{quantity} @ ${item.Price:.2f} = ${subtotal:.2f}"
+                f"{item.Name} x{order_descriptor[0]} @ ${item.Price:.2f} = ${subtotal:.2f}"
             )
 
     body_lines.append("")
@@ -282,7 +317,7 @@ def checkout():
     mail.send(msg)
 
     session["cart"] = {}
-    flash("Order submitted successfully!")
+    flash("Order submitted successfully!", category="success")
     return redirect(url_for("shop"))
 
 
