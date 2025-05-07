@@ -383,15 +383,19 @@ def admin_dashboard():
     if "user_id" not in session:
         return redirect(url_for("admin_login"))
 
-    raw_items = Item.query.limit(5).all()
+    raw_items = (
+        Item.query.filter(Item.IsActive).order_by(Item.Stock.asc()).limit(5).all()
+    )
+    raw_series = Series.query.all()
+    series_map = {s.SeriesID: s.Name for s in raw_series}
     inventory = []
     for i in raw_items:
         inventory.append(
             {
                 "sku": i.ItemID,
-                "series": getattr(i, "Series", ""),
+                "series": series_map.get(i.SeriesID, "Unknown"),
                 "name": i.Name,
-                "caffeinated": not i.IsNoCaffeine,
+                "notCaffeinated": i.IsNoCaffeine,
                 "cold": i.IsCold,
                 "stock": getattr(i, "Stock", 0),
                 "price": i.Price,
