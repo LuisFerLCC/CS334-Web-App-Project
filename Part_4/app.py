@@ -126,7 +126,7 @@ def index():
 # This is the shop page and it pulls all items from the DB in order to populate the page on the template.
 @app.route("/shop")
 def shop():
-    items = Item.query.all()
+    items = Item.query.filter(Item.IsActive).all()
     return render_template("shop.html", items=items)
 
 
@@ -172,10 +172,15 @@ def contact():
 def add_to_cart():
     itemId = str(request.form["itemId"])
     quantity = int(request.form["quantity"])
+    specialInstructions = request.form.get("specialInstructions", "").strip()
+
+    if len(specialInstructions) == 0:
+        specialInstructions = None
+
     cart = session.get("cart", {})
-    cart[itemId] = cart.get(itemId, 0) + quantity
+    cart[itemId] = [cart.get(itemId, [0])[0] + quantity, specialInstructions]
     session["cart"] = cart
-    flash("Item added to cart!")
+    flash("Item added to cart!", category="success")
     return redirect(url_for("shop"))
 
 
