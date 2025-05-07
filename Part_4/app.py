@@ -544,7 +544,41 @@ def messages():
 def inventory():
     if "user_id" not in session:
         return redirect(url_for("admin_login"))
-    return render_template("admin/inventory.html")
+
+    if not session.get("can_manage_inventory"):
+        flash("You do not have permission to view this page.", "danger")
+        return redirect(url_for("admin_dashboard"))
+
+    raw_items = (
+        Item.query.order_by(Item.ItemID.asc()).order_by(Item.IsActive.desc()).all()
+    )
+    raw_series = Series.query.all()
+    inventory = [
+        {
+            "sku": i.ItemID,
+            "series": next(
+                (s.Name for s in raw_series if s.SeriesID == i.SeriesID), "Unknown"
+            ),
+            "name": f"{'' if i.IsActive else "[DISCONTINUED] "}{i.Name}",
+            "notCaffeinated": i.IsNoCaffeine,
+            "cold": i.IsCold,
+            "stock": getattr(i, "Stock", 0),
+            "price": i.Price,
+        }
+        for i in raw_items
+    ]
+
+    return render_template("admin/inventory/all.html", inventory=inventory)
+
+
+@app.route("/admin/inventory/new")
+def new_item():
+    return "TODO"
+
+
+@app.route("/admin/inventory/<int:item_id>")
+def edit_item(item_id):
+    return "TODO"
 
 
 @app.route("/admin/orders")

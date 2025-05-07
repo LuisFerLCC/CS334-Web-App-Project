@@ -112,10 +112,16 @@
                     <td>{{ item.stock }}</td>
                     <td>${{ "%.2f"|format(item.price) }}</td>
 
-                  {% if session.get('can_manage_inventory') %}
-                    <td><button class="btn btn-outline-primary btn-sm">Edit</button></td>
-                  {% endif %}
-                </tr>
+                    {% if session.get('can_manage_inventory') %}
+                      <td>
+                        <a
+                          class="btn btn-outline-primary btn-sm"
+                          href="{{ url_for('edit_item', item_id=item.sku) }}">
+                          Edit
+                        </a>
+                      </td>
+                    {% endif %}
+                  </tr>
                 {% endfor %}
               </tbody>
             </table>

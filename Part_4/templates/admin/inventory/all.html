@@ -1,0 +1,50 @@
+{% extends "admin/dashboard.html" %}
+
+{% block title %}Inventory{% endblock %}
+
+{% block admin_content %}
+<h1>
+  Inventory
+  <a href="{{ url_for('new_item') }}" class="btn btn-outline-success btn-sm">
+    New Item
+  </a>
+</h1>
+
+<table class="table table-striped align-middle">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Series</th>
+      <th>Name</th>
+      <th>No Caf.</th>
+      <th>Cold</th>
+      <th>Stock</th>
+      <th>Price</th>
+      <th>Edit</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    {% for item in inventory %}
+      <tr>
+        <td>{{ item.sku }}</td>
+        <td>{{ item.series }}</td>
+        <td>{{ item.name }}</td>
+        <td><input type="checkbox" {% if item.notCaffeinated %}checked{% endif %} disabled /></td>
+        <td><input type="checkbox" {% if item.cold %}checked{% endif %} disabled /></td>
+        <td>{{ item.stock }}</td>
+        <td>${{ "%.2f"|format(item.price) }}</td>
+
+        <td>
+          <a
+            class="btn btn-outline-primary btn-sm"
+            href="{{ url_for('edit_item', item_id=item.sku) }}">
+            Edit
+          </a>
+        </td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% endblock %}
